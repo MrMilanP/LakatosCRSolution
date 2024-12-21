@@ -1,0 +1,292 @@
+﻿@{
+    ViewData["Title"] = "Čitanje Kartice";
+}
+<style>
+    table {
+        width: 100%;
+        text-align: left;
+    }
+
+    .mt-4 {
+        margin-top: 2rem !important;
+    }
+
+    .table-secondary {
+        background-color: #f2f2f2;
+    }
+
+    .img-thumbnail {
+        max-width: 150px;
+        height: auto;
+    }
+</style>
+
+<div class="container mt-4">
+    <div class="row g-4 align-items-start">
+        <!-- Leva strana: Izbor čitača i tabela -->
+        <div class="col-md-4">
+            <div class="border rounded p-3 bg-white shadow-sm">
+                <!-- Izbor čitača -->
+                <h6 class="border-bottom pb-3 mb-3">Available Card Readers</h6>
+                <form id="readerForm" class="mb-4">
+                    <div class="mb-3">
+                        <label for="selectedReader" class="form-label">Select Card Reader:</label>
+                        <select id="selectedReader" name="selectedReader" class="form-select form-select-sm">
+                            @foreach (var reader in Model)
+                            {
+                                <option value="@reader">@reader</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="text-center">
+                        <button type="button" id="startMonitoring" class="btn btn-success w-100">Start Monitoring</button>
+                    </div>
+                </form>
+
+                <!-- Detekcija kartica -->
+                <div>
+                    <h6 class="border-bottom pb-2 mb-3">Detected Cards</h6>
+                    <table class="table table-bordered table-sm">
+                        <thead>
+                            <tr>
+                                <th class="small">Card Type</th>
+                                <th class="small">Detected Time</th>
+                                <th class="small">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detectedCards">
+                            <!-- Dinamički sadržaj: Detektovane kartice -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="cardEvents"></div>
+            </div>
+        </div>
+
+        <!-- Desna strana: Detalji kartice -->
+        <div class="col-md-8">
+            <div class="p-4 border rounded bg-light shadow-sm h-100">
+                <h6 class="border-bottom pb-2 mb-3">Card Details</h6>
+                <div id="cardDetails" class="text-muted text-center">
+                    <p>No card details available yet.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/signalr.js/signalr.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            // Funkcija za prikazivanje grešaka
+            function AddError(message) {
+                $("#cardEvents").html(`<p class="text-danger">${message}</p>`);
+            }
+
+            // Kreiranje SignalR konekcije
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl("/cardReaderHub")
+                .build();
+
+            // Event Handleri za SignalR
+            connection.on("ReceiveCardType", addDetectedCard);
+            connection.on("CardRemoved", handleCardRemoval);
+            connection.on("MonitorException", AddError);
+
+            // Pokretanje SignalR konekcije
+            connection.start().catch(function (err) {
+                console.error(err.toString());
+            });
+
+            // Dodavanje kartice u tabelu
+            function addDetectedCard(cardType) {
+                const currentTime = new Date().toLocaleTimeString();
+                const newRow = `
+                    <tr id="detectedCardRow">
+                        <td>${cardType}</td>
+                        <td>${currentTime}</td>
+                        <td><button class="btn btn-sm btn-primary read-card-btn">Read</button></td>
+                    </tr>
+                `;
+                $("#detectedCards").append(newRow);
+
+                // Omogući dugme za čitanje kartice
+                toggleReadButton(true);
+            }
+
+            // Uklanjanje kartice iz tabele
+            function handleCardRemoval() {
+                $("#detectedCardRow").remove();
+                toggleReadButton($("#detectedCards").children().length > 0);
+                $("#cardEvents").empty();
+            }
+
+            // Funkcija za omogućavanje/onemogućavanje dugmeta za čitanje kartice
+            function toggleReadButton(enable) {
+                $(".read-card-btn").prop("disabled", !enable);
+            }
+
+            // Klik na dugme za čitanje kartice
+            $(document).on("click", ".read-card-btn", function () {
+                const cardType = $(this).closest("tr").find("td:first").text();
+                const readerName = $("#selectedReader").val();
+                const url = getReadCardUrl(cardType);
+
+                if (!url) return;
+
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    data: { readerName: readerName },
+                    success: function (response) {
+                        const cardDetailsDiv = $("#cardDetails");
+                        cardDetailsDiv.empty(); // Čistimo postojeći sadržaj
+
+                        if (response.success) {
+                            cardDetailsDiv.html(generateCardDetailsHtml(cardType, response.data));
+                        } else {
+                            cardDetailsDiv.html(`<p class="text-danger">${response.error || "Error occurred while fetching card details."}</p>`);
+                        }
+                    },
+                    error: function () {
+                        $("#cardDetails").html(`<p class="text-danger">An error occurred while communicating with the server.</p>`);
+                    }
+                });
+            });
+
+            // Start/Stop monitoring dugme
+            $("#startMonitoring").click(function () {
+                const selectedReader = $("#selectedReader").val();
+                const button = $(this);
+                let monitoring = button.hasClass("btn-danger"); // Provera trenutnog stanja
+
+                button.prop("disabled", true).text("Processing...");
+                const url = monitoring ? '/Home/StopMonitoringReader' : '/Home/StartMonitoringReader';
+
+                // AJAX zahtev za pokretanje/zaustavljanje monitoringa
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    data: { selectedReader: selectedReader },
+                    success: function (response) {
+                        if (response.success) {
+                            monitoring = response.monitoring;
+
+                            // Ažuriraj dugme
+                            if (monitoring) {
+                                button.removeClass("btn-success").addClass("btn-danger").text("Stop Monitoring");
+                            } else {
+                                button.removeClass("btn-danger").addClass("btn-success").text("Start Monitoring");
+                                clearDetectedCards(); // Ukloni sve detektovane kartice
+                            }
+                        }
+                        button.prop("disabled", false);
+                    },
+                    error: function () {
+                        AddError("Error communicating with the server.");
+                        button.prop("disabled", false).text(monitoring ? "Stop Monitoring" : "Start Monitoring");
+                    }
+                });
+            });
+
+            // Funkcija za čišćenje detektovanih kartica i događaja
+            function clearDetectedCards() {
+                $("#detectedCards").empty();
+                $("#cardEvents").empty();
+                $("#cardDetails").html(`<p>No card details available yet.</p>`);
+                toggleReadButton(false);
+            }
+
+            // Funkcija za određivanje URL-a na osnovu tipa kartice
+            function getReadCardUrl(cardType) {
+                const urls = {
+                    "IdCardDocument": '/Home/ReadIdentityCard',
+                    "VehicleDocument": '/Home/ReadVehicleCard'
+                };
+
+                if (urls[cardType]) {
+                    return urls[cardType];
+                } else if (cardType === "MedicalDocument") {
+                    AddError("Medical card reading is not implemented yet.");
+                } else {
+                    AddError("Unknown card type");
+                }
+
+                return null;
+            }
+
+            // Funkcija za generisanje HTML-a sa detaljima kartice
+            function generateCardDetailsHtml(cardType, data) {
+                if (cardType === "IdCardDocument") {
+                    return generateIdCardHtml(data);
+                } else if (cardType === "VehicleDocument") {
+                    return generateVehicleCardHtml(data);
+                }
+                return `<p class="text-danger">Unsupported card type.</p>`;
+            }
+
+            // Funkcija za generisanje HTML-a za ID karticu
+            function generateIdCardHtml(data) {
+                const { portraitBytes, document, fixedPersonal, variablePersonal } = data;
+                const imageHtml = portraitBytes
+                    ? `<img src="data:image/jpeg;base64,${portraitBytes}" alt="Portrait" class="img-thumbnail mb-3">`
+                    : `<p class="text-muted">No portrait available.</p>`;
+
+                const sections = [
+                    { title: "Document Data", fields: document },
+                    { title: "Fixed Personal Data", fields: fixedPersonal },
+                    { title: "Variable Personal Data", fields: variablePersonal }
+                ];
+
+                return `
+                    <div class="d-flex">
+                        <div>${imageHtml}</div>
+                        <div class="ms-3 w-100">
+                            ${generateDataTable(sections)}
+                        </div>
+                    </div>`;
+            }
+
+            // Funkcija za generisanje HTML-a za Vozila
+            function generateVehicleCardHtml(data) {
+                const { document, vehicle, personal } = data;
+                const sections = [
+                    { title: "Document Data", fields: document },
+                    { title: "Vehicle Data", fields: vehicle },
+                    { title: "Personal Data", fields: personal }
+                ];
+
+                return `
+                    <div>
+                        ${generateDataTable(sections)}
+                    </div>`;
+            }
+
+            // Generička funkcija za kreiranje tabela sa podacima
+            function generateDataTable(sections) {
+                return sections.map(section => `
+                    <table class="table table-bordered table-sm mb-3">
+                        <thead>
+                            <tr><th colspan="2" class="table-secondary text-center">${section.title}</th></tr>
+                        </thead>
+                        <tbody>
+                            ${Object.entries(section.fields).map(([key, value]) => `
+                                <tr>
+                                    <th>${formatFieldName(key)}</th>
+                                    <td>${value || 'N/A'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `).join('');
+            }
+
+            // Funkcija za formatiranje naziva polja (npr. "personalNumber" -> "Personal Number")
+            function formatFieldName(fieldName) {
+                return fieldName.replace(/([A-Z])/g, ' $1')
+                                .replace(/^./, str => str.toUpperCase());
+            }
+        });
+    </script>
+}

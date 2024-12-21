@@ -1,0 +1,87 @@
+﻿@model LakatosCardReader.Models.LIdentityCardModel
+
+@{
+    ViewData["Title"] = "Detalji Kartice";
+}
+
+<h2>Detalji Lične Karte</h2>
+
+<table class="table table-bordered">
+    <tr>
+        <th>Document Serial Number</th>
+        <td>@Model.Document.DocumentSerialNumber</td>
+    </tr>
+    <tr>
+        <th>Issuing Authority</th>
+        <td>@Model.Document.IssuingAuthority</td>
+    </tr>
+    <tr>
+        <th>Document Name</th>
+        <td>@Model.Document.DocumentName</td>
+    </tr>
+    <tr>
+        <th>Datum izdavanja</th>
+        <td>@Model.Document.IssuingDate</td>
+    </tr>
+    <tr>
+        <th>Datum isteka</th>
+        <td>@Model.Document.ExpiryDate</td>
+    </tr>
+    <tr>
+        <th>Matični broj</th>
+        <td>@Model.FixedPersonal.PersonalNumber</td>
+    </tr>
+    <tr>
+        <th>Prezime</th>
+        <td>@Model.FixedPersonal.Surname</td>
+    </tr>
+    <tr>
+        <th>Ime</th>
+        <td>@Model.FixedPersonal.GivenName</td>
+    </tr>
+    <tr>
+        <th>Ime roditelja</th>
+        <td>@Model.FixedPersonal.ParentGivenName</td>
+    </tr>
+    <tr>
+        <th>Pol</th>
+        <td>@Model.FixedPersonal.Sex</td>
+    </tr>
+    <tr>
+        <th>Mesto rođenja</th>
+        <td>@Model.FixedPersonal.PlaceOfBirth</td>
+    </tr>
+    <tr>
+        <th>Država rođenja</th>
+        <td>@Model.FixedPersonal.StateOfBirth</td>
+    </tr>
+    <tr>
+        <th>Datum rođenja</th>
+        <td>@Model.FixedPersonal.DateOfBirth</td>
+    </tr>
+    <tr>
+        <th>Ulica</th>
+        <td>@Model.VariablePersonal.Street</td>
+    </tr>
+    <tr>
+        <th>Broj kuće</th>
+        <td>@Model.VariablePersonal.HouseNumber</td>
+    </tr>
+    <tr>
+        <th>Stan</th>
+        <td>@Model.VariablePersonal.ApartmentNumber</td>
+    </tr>
+    <tr>
+        <th>Adresa važi od</th>
+        <td>@Model.VariablePersonal.AddressDate</td>
+    </tr>
+    @if (Model.Portrait != null)
+    {
+        <tr>
+            <th>Fotografija</th>
+            <td>
+                <img src="@("data:image/jpeg;base64," + Convert.ToBase64String(Model.PortraitBytes))" alt="Fotografija" style="max-width:200px;" />
+            </td>
+        </tr>
+    }
+</table>
