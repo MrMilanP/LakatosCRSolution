@@ -33,7 +33,7 @@ Ovo je .NET 8 rešenje (Visual Studio 2022) koje se sastoji od tri dela:
        }
      }
      ```
-   - Otvorite pregledač na `https://localhost:7272` ili `http://localhost:5054`.
+   - Otvorite web browser na `https://localhost:7272` ili `http://localhost:5054`.
 
 ## Zašto .NET 8?
 
