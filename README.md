@@ -20,6 +20,10 @@ Ovo je .NET 8 rešenje (Visual Studio 2022) koje se sastoji od tri dela:
      ```bash
      dotnet run --project Web/Web.csproj
      ```
+     ili kao https:
+    ```bash
+    dotnet run --project Web/Web.csproj --launch-profile https
+    ```
    - Nakon pokretanja, u `launchSettings.json` su definisani portovi:
      ```json
      {
