@@ -121,6 +121,101 @@ namespace LakatosCardReader.CardReader
             }        
         }
 
+        public async Task<LVehicleCardReadResult> ReadVechileCardDataAsync(string readerName)
+        {
+            LVehicleCardReadResult result = new LVehicleCardReadResult();
+
+            if (!_cardReader.IsStarted())
+            {
+                result.Success = false;
+                result.ErrorMessage = "Card reader is not started.";
+                return result;
+            }
+
+            try
+            {
+                using (var context = ContextFactory.Instance.Establish(SCardScope.System))
+                using (var reader = context.ConnectReader(readerName, SCardShareMode.Shared, SCardProtocol.Any))
+                {
+                    // Inicijalizacija Files kolekcije ako već nije inicijalizovana
+                    if (result.Files == null)
+                    {
+                        result.Files = new byte[4][];
+                    }
+
+                    // Asinhrono čitanje fajlova sa kartice
+                    for (byte i = 0; i <= 3; i++)
+                    {
+                        try
+                        {
+                            // Kreiranje APDU komande za čitanje fajla
+                            byte[] apduCommand = new byte[] { 0xD0, (byte)(i * 0x10 + 0x01) };
+
+                            // Asinhrono čitanje fajla sa kartice - sada koristimo VReadFileAsync
+                            result.Files[i] = await VehicleHelper.VReadFileAsync(reader, apduCommand);
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new Exception($"Reading document {i} file: {ex.Message}", ex);
+                        }
+                    }
+
+                    // Ostatak koda (parsiranje BER podataka) ostaje nepromenjen, 
+                    // jer se ne bavi direktnom interakcijom sa karticom i nije neophodno da bude asinhron
+
+                    // Parsiranje i spajanje BER podataka
+                    try
+                    {
+                        // Kreiranje instanci za parsiranje
+                        BER data = new BER();
+
+                        for (byte i = 0; i <= 3; i++)
+                        {
+                            try
+                            {
+                                // Parsiranje BER podataka iz fajla
+                                BER parsed = BER.ParseBER(result.Files[i]);
+
+                                // Spajanje parsiranih podataka u 'data'
+                                data.Merge(parsed);
+                            }
+                            catch (Exception ex)
+                            {
+                                throw new Exception($"Parsing {i} file: {ex.Message}", ex);
+                            }
+                        }
+
+
+                        LVehicleCardParser lVehicleCardParser = new LVehicleCardParser();
+                        //Mapiranje spojenih BER podataka u LVehicleCardModel
+                        LVehicleCardModel lVehicleCardModel = new LVehicleCardModel();
+
+
+
+                        lVehicleCardModel.Document = lVehicleCardParser.ParseDocument(data);
+                        lVehicleCardModel.Personal = lVehicleCardParser.ParsePersonal(data);
+                        lVehicleCardModel.Vehicle = lVehicleCardParser.ParseVehicle(data);
+
+                        // Dodeljivanje dokumenta rezultatu
+                        result.VehicleCardData = lVehicleCardModel;
+                        result.Success = true;
+
+                        return result;
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new Exception($"Error processing vehicle card data: {ex.Message}", ex);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                result.ErrorMessage = ex.Message;
+                result.Success = false;
+            }
+            return result;
+        }
+
 
     }
 }

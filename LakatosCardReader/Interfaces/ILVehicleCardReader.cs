@@ -10,5 +10,7 @@ namespace LakatosCardReader.Interfaces
     public interface ILVehicleCardReader
     {
         LVehicleCardReadResult ReadVechileCardData(string readerName);
+
+        Task<LVehicleCardReadResult> ReadVechileCardDataAsync(string readerName);
     }
 }

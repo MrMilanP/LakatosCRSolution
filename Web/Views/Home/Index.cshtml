@@ -162,8 +162,10 @@
                 let monitoring = button.hasClass("btn-danger"); // Provera trenutnog stanja
 
                 button.prop("disabled", true).text("Processing...");
-                const url = monitoring ? '/Home/StopMonitoringReader' : '/Home/StartMonitoringReader';
+                //const url = monitoring ? '/Home/StopMonitoringReader' : '/Home/StartMonitoringReader';
 
+                //testiramo asinhrone metode iz controlle-a
+                const url = monitoring ? '/Home/StopAsyncMonitoringReader' : '/Home/StartAsyncMonitoringReader';
                 // AJAX zahtev za pokretanje/zaustavljanje monitoringa
                 $.ajax({
                     url: url,
@@ -201,8 +203,10 @@
             // Funkcija za određivanje URL-a na osnovu tipa kartice
             function getReadCardUrl(cardType) {
                 const urls = {
-                    "IdCardDocument": '/Home/ReadIdentityCard',
-                    "VehicleDocument": '/Home/ReadVehicleCard'
+                    //"IdCardDocument": '/Home/ReadIdentityCard',
+                    "IdCardDocument": '/Home/AReadIdentityCard', //Poziv asinhronoj metodi u controller-u za citanje licne karte
+                    //"VehicleDocument": '/Home/ReadVehicleCard'
+                    "VehicleDocument": '/Home/AReadVehicleCard' //Poziv asinhronoj metodi u controller-u za citanje saobracajne dozvole
                 };
 
                 if (urls[cardType]) {

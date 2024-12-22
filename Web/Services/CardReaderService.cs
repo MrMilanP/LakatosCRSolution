@@ -7,6 +7,7 @@ using Web.Hubs;
 
 using System.Threading.Tasks;
 using LakatosCardReader.Models;
+using static LakatosCardReader.Models.LCardTypeModel;
 
 namespace Web.Services
 {
@@ -43,12 +44,46 @@ namespace Web.Services
             return _vehicleCardReader.ReadVechileCardData(readerName);
         }
 
-        private async void OnCardInserted(object? sender, CardStatusEventArgs e)
+        //Asinhroni poziv za čitanje lične karte
+        public async Task<LIdentityCardReadResult> GetIdentityDataAsync(string readerName)
         {
-            var cardType = _cardReader.GetCardType(e.ReaderName).ToString();
-            await _hubContext.Clients.All.SendAsync("ReceiveCardType", cardType);
+            return await _identityCardReader.ReadIdentityCardDataAsync(readerName);
         }
 
+        //Asinhroni poziv za čitanje saobracajne dozvole
+        public async Task<LVehicleCardReadResult> GetVehicleDataAsync(string readerName)
+        {
+            return await _vehicleCardReader.ReadVechileCardDataAsync(readerName);
+        }
+
+        //private async void OnCardInserted(object? sender, CardStatusEventArgs e)
+        //{
+        //    //var cardType = _cardReader.GetCardType(e.ReaderName).ToString();
+
+        //    //prelazimo na asinhroni poziv
+        //    var cardType = _cardReader.GetCardTypeAsync(e.ReaderName);
+        //    await _hubContext.Clients.All.SendAsync("ReceiveCardType", cardType.Result.ToString());
+        //}
+        private async void OnCardInserted(object? sender, CardStatusEventArgs e)
+        {
+            try
+            {
+                // Pokreni asinhronu operaciju dobijanja tipa kartice
+                Task<CardType> cardTypeTask = _cardReader.GetCardTypeAsync(e.ReaderName);
+
+                // Sačekaj da se operacija završi
+                CardType cardType = await cardTypeTask;
+
+                // Pošalji poruku SignalR klijentima (asinhrono)
+                await _hubContext.Clients.All.SendAsync("ReceiveCardType", cardType.ToString());
+            }
+            catch (Exception ex)
+            {
+                // Obrada greške - pošalji poruku o grešci i/ili loguj
+                await _hubContext.Clients.All.SendAsync("Error", ex.Message);
+                Console.WriteLine($"Greška prilikom obrade događaja CardInserted: {ex.Message}");
+            }
+        }
         private async void OnCardRemoved(object? sender, CardStatusEventArgs e)
         {
             await _hubContext.Clients.All.SendAsync("CardRemoved", e.ReaderName);
@@ -64,9 +99,22 @@ namespace Web.Services
             _cardReader.Start(selectedReader);
         }
 
+
+
         public void StopMonitoring()
         {
             _cardReader.Stop();
+        }
+
+        //asinhrone metode
+        public async void StartAsync(string readerName)
+        {
+            await _cardReader.StartAsync(readerName);
+        }
+
+        public async void StopAsync()
+        {
+            await _cardReader.StopAsync();
         }
 
         public void Dispose()

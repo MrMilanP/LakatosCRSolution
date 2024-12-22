@@ -12,6 +12,8 @@ namespace LakatosCardReader.Interfaces
         // Metoda za čitanje lične karte
         LIdentityCardReadResult ReadIdentityCardData(string readerName);
 
+        Task<LIdentityCardReadResult> ReadIdentityCardDataAsync(string readerName);
+
 
     }
 }

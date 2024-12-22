@@ -9,7 +9,7 @@ using static LakatosCardReader.Models.LCardTypeModel;
 
 namespace LakatosCardReader.Interfaces
 {
-    public interface ILCardReader: IDisposable
+    public interface ILCardReader : IDisposable
     {
         event EventHandler<CardStatusEventArgs>? CardInserted;
         event EventHandler<CardStatusEventArgs>? CardRemoved;
@@ -21,9 +21,19 @@ namespace LakatosCardReader.Interfaces
 
         void Stop();
 
+        Task StartAsync();
+
+        Task StartAsync(string readerName);
+
+        Task StopAsync();
+
         CardType GetCardType(string readerName);
 
+        Task<CardType> GetCardTypeAsync(string readerName);
+
         bool IsStarted();
+
+
 
 
     }

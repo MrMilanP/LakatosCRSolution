@@ -280,6 +280,112 @@ public static class VehicleHelper
         }
     }
 
+    //asinhrone metode
+    public static async Task<byte[]> VReadFileAsync(ICardReader reader, byte[] fileId)
+    {
+        try
+        {
+            //Selektovanje fajla...
+            var selectFile = APDUBuilder.BuildAPDU(0x00, 0xA4, 0x02, 0x04, fileId, 0);
+            var rsp = await VTransmitAsync(reader, selectFile); // Koristimo asinhroni VTransmitAsync
+
+            if (!VIsResponseOK(rsp))
+            {
+                throw new Exception("Selektovanje fajla nije uspelo.");
+            }
+
+            //Citanje headera...
+            byte[] headerResponse = await VReadBinaryAsync(reader, 0, 32); // Koristimo asinhroni VReadBinaryAsync
+
+            // Ukloni status word (90 00)
+            if (headerResponse.Length < 2)
+                throw new Exception("Header je prekratak.");
+
+            byte[] header = headerResponse.Take(headerResponse.Length - 2).ToArray();
+
+            if (header.Length < 1)
+                throw new Exception("Citanje headera nije uspelo.");
+
+            // Sada koristimo ParseVehicleCardFileSize koji imitira Go kod 
+            // i ne pokušava globalni TLV parse, već direktno čita tag i dužinu sa offset-a.
+            var (length, offsetValue, err) = ParseVehicleCardFileSize(header);
+            if (err != null)
+            {
+                throw new Exception($"Parsiranje veličine fajla nije uspelo: {err.Message}");
+            }
+
+            byte[] fileData = new byte[length];
+            int bytesRead = 0;
+            int remaining = (int)length;
+            int chunkSize = 100; // Maksimalno 100 bajta po čitanju
+
+            while (remaining > 0)
+            {
+                int toRead = Math.Min(remaining, chunkSize);
+
+                byte[] chunk = await VReadBinaryAsync(reader, (int)offsetValue, toRead); // Koristimo asinhroni VReadBinaryAsync
+
+                if (chunk.Length == 0)
+                {
+                    throw new Exception("Citanje podataka fajla nije uspelo.");
+                }
+
+                Array.Copy(chunk, 0, fileData, bytesRead, chunk.Length);
+                bytesRead += chunk.Length;
+                offsetValue += (uint)chunk.Length;
+                remaining -= chunk.Length;
+            }
+
+            //Fajl je uspešno pročitan
+            return fileData;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Greska u VReadFile: {ex.Message}");
+        }
+    }
+
+    // Asinhrona verzija VReadBinary metode
+    private static async Task<byte[]> VReadBinaryAsync(ICardReader reader, int offset, int length)
+    {
+        byte[] readCommand = APDUBuilder.BuildAPDU(0x00, 0xB0, (byte)(offset >> 8), (byte)(offset & 0xFF), null, length);
+
+        var rsp = await VTransmitAsync(reader, readCommand); // Koristimo asinhroni VTransmitAsync
+
+        if (!VIsResponseOK(rsp))
+        {
+            throw new Exception("VReadBinary nije uspelo.");
+        }
+
+        // Ukloni poslednja dva bajta (SW 90 00) iz svakog chunk-a, kao i u Go kodu
+        if (rsp.Length < 2)
+            throw new Exception("Response je prekratak.");
+
+        return rsp.Take(rsp.Length - 2).ToArray();
+    }
+
+    // Asinhrona verzija VTransmit metode
+    public static async Task<byte[]> VTransmitAsync(ICardReader reader, byte[] apdu)
+    {
+        try
+        {
+            // Koristimo Task.Run da bi se Transmit poziv izvršio na posebnom thread-u iz Thread Pool-a
+            return await Task.Run(() => {
+                var sendPci = SCardPCI.GetPci(reader.Protocol);
+                var receiveBuffer = new byte[1024];
+                int received = reader.Transmit(sendPci, apdu, receiveBuffer);
+                byte[] response = new byte[received];
+                Array.Copy(receiveBuffer, response, received);
+
+                return response;
+            });
+        }
+        catch (PCSCException ex)
+        {
+            throw new Exception($"Greška u Transmit: {ex.Message}", ex);
+        }
+    }
+
     private static bool VIsResponseOK(byte[] response)
     {
         return response != null &&

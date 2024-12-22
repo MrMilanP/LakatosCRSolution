@@ -14,6 +14,14 @@ namespace LakatosCardReader.Interfaces
         void StartMonitoring(string[] readerNames);
         void StartMonitoring(string readerName);
         void StopMonitoring();
+
+
+        Task StartAsync(string[] readerNames);
+
+        Task StartAsync(string readerName);
+
+        Task StopAsync();
+
         string[] GetReaders();
 
         bool IsStarted();

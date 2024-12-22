@@ -72,6 +72,9 @@ namespace LakatosCardReader.CardReader
             return _monitor.IsStarted();
         }
 
+
+
+
         //private void OnCardInsertedHandler(object sender, CardStatusEventArgs e)
         //{
         //    CardInserted?.Invoke(this, e);
@@ -114,6 +117,78 @@ namespace LakatosCardReader.CardReader
                         foreach (var t in possibleTypes)
                         {
                             if (TryConfirmType(reader, t))
+                            {
+                                return t;
+                            }
+                        }
+                        return CardType.Unknown;
+                    }
+                }
+            }
+            catch (PCSCException ex)
+            {
+                MonitorException?.Invoke(this, ex);
+                return CardType.Unknown;
+            }
+        }
+
+
+        //Asinhrone metode
+        public async Task StartAsync()
+        {
+            var readerNames = _monitor.GetReaders();
+            if (readerNames.Length == 0)
+            {
+                // Nema dostupnih čitača
+                return;
+            }
+
+            await _monitor.StartAsync(readerNames);
+        }
+
+        public async Task StartAsync(string readerName)
+        {
+            await _monitor.StartAsync(readerName);
+        }
+
+        public async Task StopAsync()
+        {
+            await _monitor.StopAsync();
+        }
+
+        public async Task<CardType> GetCardTypeAsync(string readerName)
+        {
+            try
+            {
+                using (var context = ContextFactory.Instance.Establish(SCardScope.System))
+                using (var reader = context.ConnectReader(readerName, SCardShareMode.Shared, SCardProtocol.Any))
+                {
+                    var status = reader.GetStatus();
+                    var atr = status.GetAtr();
+
+                    var dict = _parser.GetCardType(atr);
+                    if (dict.Count == 0)
+                    {
+                        return CardType.Unknown;
+                    }
+
+                    var kvp = dict.First();
+                    var possibleTypes = kvp.Value;
+
+                    if (possibleTypes.Count == 0)
+                    {
+                        return CardType.Unknown;
+                    }
+                    if (possibleTypes.Count == 1)
+                    {
+                        return possibleTypes[0];
+                    }
+                    else
+                    {
+                        foreach (var t in possibleTypes)
+                        {
+                            // Koristimo Task.Run za asinhrono izvršavanje TryConfirmType
+                            if (await Task.Run(() => TryConfirmType(reader, t)))
                             {
                                 return t;
                             }

@@ -108,6 +108,72 @@ namespace Web.Controllers
                 });
             }
         }
+        //Asinhrona metoda u kontroleru
+        [HttpPost]
+        public async Task<IActionResult> AReadVehicleCardAsync(string readerName)
+        {
+            LVehicleCardReadResult readResult = await _cardReaderService.GetVehicleDataAsync(readerName);
+
+            if (readResult.Success && readResult.VehicleCardData != null)
+            {
+                // Serializujemo podatke o saobracajnoj kartici u JSON
+                var response = new
+                {
+                    success = true,
+                    data = new
+                    {
+                        document = readResult.VehicleCardData.Document,
+                        vehicle = readResult.VehicleCardData.Vehicle,
+                        personal = readResult.VehicleCardData.Personal
+                    }
+                };
+                return Json(response);
+            }
+            else
+            {
+                // Vraćamo grešku u JSON formatu
+                return Json(new
+                {
+                    success = false,
+                    error = readResult.ErrorMessage,
+                    availableReaders = GetAvailableReaders() // Metoda za dobijanje dostupnih čitača
+                });
+            }
+        }
+
+        //Asinhrona metoda u kontroleru
+        [HttpPost]
+        public async Task<IActionResult> AReadIdentityCardAsync(string readerName)
+        {
+            LIdentityCardReadResult readResult = await _cardReaderService.GetIdentityDataAsync(readerName);
+
+            if (readResult.Success && readResult.IdentityCardData != null)
+            {
+                // Serializujemo podatke o licnoj kartici u JSON
+                var response = new
+                {
+                    success = true,
+                    data = new
+                    {
+                        document = readResult.IdentityCardData.Document,
+                        fixedPersonal = readResult.IdentityCardData.FixedPersonal,
+                        variablePersonal = readResult.IdentityCardData.VariablePersonal,
+                        portraitBytes = readResult.IdentityCardData.PortraitBytes
+                    }
+                };
+                return Json(response);
+            }
+            else
+            {
+                // Vraćamo grešku u JSON formatu
+                return Json(new
+                {
+                    success = false,
+                    error = readResult.ErrorMessage,
+                    availableReaders = GetAvailableReaders() // Metoda za dobijanje dostupnih čitača
+                });
+            }
+        }
 
         // Pomoćna metoda za dobijanje dostupnih čitača
         private List<string> GetAvailableReaders()
@@ -126,14 +192,7 @@ namespace Web.Controllers
         }
 
 
-        [HttpPost]
-        public IActionResult StartMonitoringReader(string selectedReader)
-        {
-            _cardReaderService.StartMonitoring(selectedReader);
-            //return RedirectToAction("Index");
 
-            return Json(new { success = true, monitoring = true });
-        }
 
         [HttpPost]
         public IActionResult StopMonitoringReader(string selectedReader)
@@ -149,6 +208,20 @@ namespace Web.Controllers
             return View();
         }
 
+        //asinhrone metode
+        [HttpPost]
+        public async Task<IActionResult> StartAsyncMonitoringReader(string selectedReader)
+        {
+            await Task.Run(() => _cardReaderService.StartAsync(selectedReader));
+            return Json(new { success = true, monitoring = true });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> StopAsyncMonitoringReader(string selectedReader)
+        {
+            await Task.Run(() => _cardReaderService.StopAsync());
+            return Json(new { success = true, monitoring = false });
+        }
 
     }
 }

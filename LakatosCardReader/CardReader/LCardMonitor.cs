@@ -78,6 +78,53 @@ namespace LakatosCardReader.CardReader
             }
         }
 
+
+        //Asinhrone metode
+        public async Task StartAsync(string[] readerNames)
+        {
+            try
+            {
+                foreach (var reader in readerNames)
+                {
+                    // Koristimo Task.Run da bi se Start poziv izvršio na posebnom thread-u iz Thread Pool-a
+                    await Task.Run(() => _monitor.Start(reader));
+                }
+            }
+            catch (PCSCException ex)
+            {
+                MonitorException?.Invoke(this, ex);
+                // Eventualno logovanje greške
+            }
+        }
+
+        public async Task StartAsync(string readerName)
+        {
+            try
+            {
+                // Slično, koristimo Task.Run
+                await Task.Run(() => _monitor.Start(readerName));
+            }
+            catch (PCSCException ex)
+            {
+                MonitorException?.Invoke(this, ex);
+                // Eventualno logovanje greške
+            }
+        }
+
+        public async Task StopAsync()
+        {
+            try
+            {
+                // I ovde koristimo Task.Run
+                await Task.Run(() => _monitor.Cancel());
+            }
+            catch (PCSCException ex)
+            {
+                MonitorException?.Invoke(this, ex);
+                // Eventualno logovanje greške
+            }
+        }
+
         public bool IsStarted()
         {
             return _monitor.Monitoring;
