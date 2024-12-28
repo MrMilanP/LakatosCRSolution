@@ -71,6 +71,12 @@ Otvorite [http://localhost:5054](http://localhost:5054) ili [https://localhost:7
 - **Web**: Koristi SignalR za emitovanje događaja i prikaz čitanja kartica u realnom vremenu.
 - **Zdravstvena kartica**: Trenutno se samo detektuje; čitanje je planirano (*TODO*).
 
+
+## Referenca
+
+Razvoj ovog projekta u .NET 8 inspirisan je projektom Nikole Ubavića **Baš Čelik**, napisanim u Go jeziku.  
+GitHub link: [Baš Čelik](https://github.com/ubavic/bas-celik)
+
 ## Update
 
 Dodate su asinhrone metode u Class Library sa sufiksom `Async`, dok su sinhrone metode zadržane. Asinhronost omogućava pokretanje monitora za slanje događaja, detekciju tipa kartice i čitanje kartice. Ove funkcionalnosti su implementirane u web projektu (MVC + SignalR), dok konzolna aplikacija koristi stare sinhrone metode.
