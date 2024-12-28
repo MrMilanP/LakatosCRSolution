@@ -232,7 +232,7 @@
 
             // Funkcija za generisanje HTML-a za ID karticu
             function generateIdCardHtml(data) {
-                const { portraitBytes, document, fixedPersonal, variablePersonal } = data;
+                const { portraitBytes, document, fixedPersonal, variablePersonal , downloadCertificateUrl } = data;
                 const imageHtml = portraitBytes
                     ? `<img src="data:image/jpeg;base64,${portraitBytes}" alt="Portrait" class="img-thumbnail mb-3">`
                     : `<p class="text-muted">No portrait available.</p>`;
@@ -243,10 +243,17 @@
                     { title: "Variable Personal Data", fields: variablePersonal }
                 ];
 
+                const downloadLinkHtml = downloadCertificateUrl
+                    ? `<a href="${downloadCertificateUrl}" class="btn btn-primary mt-3" download="PersonalCertificate.bin">Download Certificate</a>`
+                    : `<p class="text-muted mt-3">Certificate not available for download.</p>`;
+
                 return `
                     <div class="d-flex">
                         <div>${imageHtml}</div>
                         <div class="ms-3 w-100">
+                            <div class="d-flex justify-content-end mb-3">
+                                ${downloadLinkHtml}
+                            </div>
                             ${generateDataTable(sections)}
                         </div>
                     </div>`;

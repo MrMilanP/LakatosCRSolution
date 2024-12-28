@@ -217,6 +217,11 @@ namespace LakatosCardReader.ConsoleApp
                 doc.Portrait.Save(photoPath);
                 Console.WriteLine($"Fotografija sačuvana u '{photoPath}'.");
             }
+            if(doc.PersonalCertificate != null)
+            {
+                File.WriteAllBytes("personalCert.der", doc.PersonalCertificate);
+                Console.WriteLine($"Sertifikat sačuvan u personalCert.der'.");
+            }
         }
 
         private static void DisplayIdentityVariableSata(LIdentityCardModel doc)

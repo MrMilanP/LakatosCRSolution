@@ -6,7 +6,12 @@ namespace LakatosCardReader.Utils
     {
         public static string FormatDate(string? dateStr)
         {
-            if (string.IsNullOrEmpty(dateStr)) return dateStr;
+
+            if (string.IsNullOrEmpty(dateStr))
+            {
+                return string.Empty; 
+            }
+            //if (string.IsNullOrEmpty(dateStr)) return dateStr;
             if (dateStr.Length == 8 && char.IsDigit(dateStr[0]))
             {
                 // Pretpostavka: DDMMYYYY format

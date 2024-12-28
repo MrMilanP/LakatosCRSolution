@@ -10,6 +10,8 @@ namespace LakatosCardReader.Models
         public VariablePersonalData VariablePersonal { get; set; } = new VariablePersonalData();
         public Image? Portrait { get; set; }
 
+        public byte[]? PersonalCertificate { get; set; }
+
         public byte[]? PortraitBytes
         {
             get

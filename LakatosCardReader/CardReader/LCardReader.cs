@@ -90,7 +90,7 @@ namespace LakatosCardReader.CardReader
                 {
                     var status = reader.GetStatus();
                     var atr = status.GetAtr();
-
+                    Console.WriteLine("ATR: " + BitConverter.ToString(atr));
                     // Dobićemo dictionary od parsera, npr: { "GEMALTO_ATR_1": [IdCardDocument, VehicleDocument] }
                     var dict = _parser.GetCardType(atr);
                     if (dict.Count == 0)

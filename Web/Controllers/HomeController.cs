@@ -2,6 +2,7 @@
 using LakatosCardReader.Models;
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using PCSC;
 using System.Diagnostics;
 using Web.Models;
@@ -13,18 +14,22 @@ namespace Web.Controllers
     {
         private readonly ILogger<HomeController> _logger;
 
-       // private readonly ICardService _cardService;
+        //Privremeno cuvanje sertifikata
+        private readonly IMemoryCache _memoryCache;
+
+        // private readonly ICardService _cardService;
 
 
         private readonly CardReaderService _cardReaderService;
         private readonly ILCardMonitor _cardMonitor;
 
-        public HomeController(ILogger<HomeController> logger,/* ICardService cardService,*/ CardReaderService cardReaderService, ILCardMonitor cardMonitor)
+        public HomeController(ILogger<HomeController> logger,/* ICardService cardService,*/ CardReaderService cardReaderService, ILCardMonitor cardMonitor, IMemoryCache memoryCache)
         {
             _logger = logger;
            // _cardService = cardService;
             _cardReaderService = cardReaderService;
             _cardMonitor = cardMonitor;
+            _memoryCache = memoryCache;
 
         }
 
@@ -51,6 +56,10 @@ namespace Web.Controllers
 
             if (readResult.Success && readResult.IdentityCardData != null)
             {
+
+
+                var fileId = Guid.NewGuid().ToString();
+                _memoryCache.Set(fileId, readResult.IdentityCardData.PersonalCertificate, TimeSpan.FromMinutes(10)); // Čuvaj 10 minuta
                 // Serializujemo podatke o identifikacionoj kartici u JSON
                 var response = new
                 {
@@ -60,7 +69,9 @@ namespace Web.Controllers
                         document = readResult.IdentityCardData.Document,
                         fixedPersonal = readResult.IdentityCardData.FixedPersonal,
                         variablePersonal = readResult.IdentityCardData.VariablePersonal,
-                        portraitBytes = readResult.IdentityCardData.PortraitBytes
+                        portraitBytes = readResult.IdentityCardData.PortraitBytes,
+                        downloadCertificateUrl = Url.Action("DownloadCertificate", new { fileId }) // URL za preuzimanje sertifikata
+
                     }
                 };
                 return Json(response);
@@ -75,6 +86,15 @@ namespace Web.Controllers
                     availableReaders = GetAvailableReaders() // Metoda za dobijanje dostupnih čitača
                 });
             }
+        }
+
+        public IActionResult DownloadCertificate(string fileId)
+        {
+            if (_memoryCache.TryGetValue(fileId, out byte[]? personalCertificate))
+            {
+                return File(personalCertificate, "application/octet-stream", "PersonalCertificate.der");
+            }
+            return NotFound("Personal Certificate not found.");
         }
 
         [HttpPost]
@@ -150,6 +170,10 @@ namespace Web.Controllers
             if (readResult.Success && readResult.IdentityCardData != null)
             {
                 // Serializujemo podatke o licnoj kartici u JSON
+
+                var fileId = Guid.NewGuid().ToString();
+                _memoryCache.Set(fileId, readResult.IdentityCardData.PersonalCertificate, TimeSpan.FromMinutes(10)); // Čuvaj 10 minuta
+
                 var response = new
                 {
                     success = true,
@@ -158,7 +182,8 @@ namespace Web.Controllers
                         document = readResult.IdentityCardData.Document,
                         fixedPersonal = readResult.IdentityCardData.FixedPersonal,
                         variablePersonal = readResult.IdentityCardData.VariablePersonal,
-                        portraitBytes = readResult.IdentityCardData.PortraitBytes
+                        portraitBytes = readResult.IdentityCardData.PortraitBytes,
+                        downloadCertificateUrl = Url.Action("DownloadCertificate", new { fileId }) // URL za preuzimanje sertifikata
                     }
                 };
                 return Json(response);

@@ -55,5 +55,51 @@ namespace LakatosCardReader.Utils
 
             return apdu.ToArray();
         }
+
+        public static byte[] BuildExtendedAPDU(byte cla, byte ins, byte p1, byte p2, byte[] data, int le)
+        {
+            List<byte> apdu = new List<byte>();
+            apdu.Add(cla);
+            apdu.Add(ins);
+            apdu.Add(p1);
+            apdu.Add(p2);
+
+            if (data != null && data.Length > 0)
+            {
+                if (data.Length <= 255)
+                {
+                    apdu.Add((byte)data.Length);
+                    apdu.AddRange(data);
+                }
+                else
+                {
+                    apdu.Add(0x00); // Extended length indicator
+                    byte[] lc = BitConverter.GetBytes(data.Length);
+                    // APDU extended length uses big-endian
+                    apdu.AddRange(new byte[] { lc[2], lc[1], lc[0] });
+                    apdu.AddRange(data);
+                }
+            }
+
+            if (le >= 0)
+            {
+                if (le <= 256)
+                {
+                    apdu.Add((byte)(le == 256 ? 0x00 : le));
+                }
+                else
+                {
+                    apdu.Add(0x00); // Extended length indicator
+                    byte[] leBytes = BitConverter.GetBytes(le);
+                    // APDU extended length uses big-endian
+                    apdu.AddRange(new byte[] { leBytes[2], leBytes[1], leBytes[0] });
+                }
+            }
+
+            return apdu.ToArray();
+        }
+
+
+
     }
 }
