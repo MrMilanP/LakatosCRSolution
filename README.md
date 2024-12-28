@@ -75,6 +75,11 @@ Otvorite [http://localhost:5054](http://localhost:5054) ili [https://localhost:7
 
 Dodate su asinhrone metode u Class Library sa sufiksom `Async`, dok su sinhrone metode zadržane. Asinhronost omogućava pokretanje monitora za slanje događaja, detekciju tipa kartice i čitanje kartice. Ove funkcionalnosti su implementirane u web projektu (MVC + SignalR), dok konzolna aplikacija koristi stare sinhrone metode.
 
+## Update 28.11.2024.
+
+- **Čitanje sertifikata sa lične karte**:
+  - Personalni sertifikat za autentifikaciju (Zlib kompresovan) sada se može čitati, dekompresovati i sačuvati.
+  - Sertifikat se može preuzeti u `DER` formatu direktno iz web aplikacije (privremeno čuvanje u kontroleru - 10 minuta).
 
 ## Poziv na saradnju
 
