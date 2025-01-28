@@ -87,22 +87,7 @@ Dodate su asinhrone metode u Class Library sa sufiksom `Async`, dok su sinhrone 
   - Personalni sertifikat za autentifikaciju (Zlib kompresovan) sada se može čitati, dekompresovati i sačuvati.
   - Sertifikat se može preuzeti u `DER` formatu direktno iz web aplikacije (privremeno čuvanje u kontroleru - 10 minuta).
 
-## Poziv na saradnju
 
-Ako imate pitanja, ideje za unapređenje ili želite da sarađujemo na sličnim projektima, slobodno mi se obratite! Takođe, ako tražite senior programera sa dugogodišnjim iskustvom, otvoren sam za prilike koje cene praktična rešenja i stvarne rezultate.
-
-### **𝗡𝗮𝗽𝗼𝗺𝗲𝗻𝗮 – 𝗵𝗶𝘁𝗻𝗼!**  
-**𝗡𝗮ž𝗮𝗹𝗼𝘀𝘁, 𝘂𝘀𝗸𝗼𝗿𝗼 𝗼𝘀𝘁𝗮𝗷𝗲𝗺 𝗯𝗲𝘇 𝘀𝗿𝗲𝗱𝘀𝘁𝗮𝘃𝗮 𝗶 𝗮𝗸𝗼 𝘀𝗲 𝗼𝘃𝗮𝗸𝘃𝗮 𝘀𝗶𝘁𝘂𝗮𝗰𝗶𝗷𝗮 𝗻𝗮𝘀𝘁𝗮𝘃𝗶, 𝗽𝗼𝘀𝘁𝗼𝗷𝗶 𝗿𝗲𝗮𝗹𝗻𝗮 𝗼𝗽𝗮𝘀𝗻𝗼𝘀𝘁 𝗱𝗮 𝗽𝗼𝘀𝘁𝗮𝗻𝗲𝗺 𝘇̌𝗿𝘁𝘃𝗮 𝗴𝗹𝗮𝗱𝗶, 𝗶𝘇𝘃𝗿𝘀̌𝗶𝘁𝗲𝗹𝗷𝗮 𝗶 𝘂𝗹𝗶𝗰𝗲.**
-
-
-## Call for Collaboration
-
-If you have questions, ideas for improvement, or would like to collaborate on similar projects, feel free to reach out! Additionally, if you are looking for a senior developer with years of experience, I am open to opportunities that value practical solutions and real-world results.
-
-### **𝗡𝗼𝘁𝗲 – 𝗨𝗿𝗴𝗲𝗻𝘁!**  
-**Unfortunately, I am soon running out of resources, and if the current situation continues, there is a real danger that I could fall victim to hunger, debt collectors, and homelessness.**  
-
-I must mention that my English skills are not perfect, but if you are looking for a **programmer** and not a **linguist**, feel free to contact me!
 
 
 
